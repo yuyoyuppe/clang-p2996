@@ -2154,12 +2154,37 @@ void MicrosoftCXXNameMangler::mangleReflection(const ReflectionValue &R) {
     break;
   }
   case ReflectionValue::RK_expr_result:
+    Out << 'e';
+    Context.mangleCanonicalTypeName(R.getAsExprResult()->getType(), Out, false);
+    break;
   case ReflectionValue::RK_declaration:
+    Out << 'd';
+    if (const auto *ND = dyn_cast<NamedDecl>(R.getAsDecl())) {
+      mangleName(ND);
+    } else {
+      Out << "unknown_decl";
+    }
+    break;
   case ReflectionValue::RK_template:
+    Out << 'p';
+    if (const auto *TD = R.getAsTemplate().getAsTemplateDecl()) {
+      mangleName(TD);
+    } else {
+      Out << "unknown_template";
+    }
+    break;
   case ReflectionValue::RK_namespace:
+    Out << 'n' << Context.getAnonymousNamespaceHash();
+    break;
   case ReflectionValue::RK_base_specifier:
+    Out << 'b';
+    Context.mangleCanonicalTypeName(R.getAsBaseSpecifier()->getType(), Out,
+                                    false);
+    break;
   case ReflectionValue::RK_data_member_spec:
-    llvm_unreachable("unimplemented");
+    Out << 'm';
+    Context.mangleCanonicalTypeName(R.getAsDataMemberSpec()->Ty, Out, false);
+    break;
   }
   Out << 'E';
 }
